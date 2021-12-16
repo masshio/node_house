@@ -1,4 +1,6 @@
 const db = require('../core/mysql');
+const fs = require('fs')
+const path = require('path')
 class Houses {
     async getHouses(req, res) {
         let getSql = 'SELECT * FROM `houses` LIMIT ?,?';
@@ -122,8 +124,19 @@ class Houses {
         }
     }
     async addHouses(req, res) {
-        let insertSql = 'INSERT INTO `houses`(`h_add`, `h_square`, `h_des`, `h_price`, `u_id`, `h_type`)VALUES(?,?,?,?,?,?);';
-        let params = [req.body.add, req.body.square, req.body.des, req.body.price, req.body.userid, req.body.type];
+        let insertSql = 'INSERT INTO `houses`(`h_add`, `h_square`, `h_des`, `h_price`, `u_id`, `h_type`, `h_pic`)VALUES(?,?,?,?,?,?,?);';
+        console.log(req.body, req.file);
+        let ext = path.extname(req.file.originalname);
+        let filename = req.file.filename;
+        fs.rename(req.file.path, req.file.path + ext, err => {
+            if(err) {
+                res.json({
+                    code: -200,
+                    msg: '图片命名失败'
+                })
+            }
+        })
+        let params = [req.body.add, req.body.square, req.body.des, req.body.price, req.body.userid, req.body.type,filename + ext];
         try {
             let result = await db.query(insertSql, params);
             if (result && result.affectedRows >= 1) {
@@ -167,6 +180,15 @@ class Houses {
             })
         }
 
+    }
+    async uploadImg(req, res) {
+        let upadtaSql = 'UPDATE `houses` SET `h_pic`=? WHERE `h_id`=?;'
+        let params = [req.file, req.body]
+        console.log('body', req.body);
+        console.log('file', req.file);
+        res.json({
+            msg: 'success'
+        })
     }
     async updateHouses(req, res) {
         let updateSql = 'UPDATE `houses` SET `h_add`=?, `h_square`=?, `h_des`=?, `h_price`=?, `h_type`=? WHERE `h_id`=?;';

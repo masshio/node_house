@@ -1,7 +1,7 @@
 const express = require('express');
 const app = express();
-
 app.use(express.static('./dist'))
+app.use(express.static('./imgs'))
 app.use(express.json());
 app.use(express.urlencoded({extended: false}))
 app.use((req, res, next) => {
@@ -19,7 +19,7 @@ app.use((req, res, next) => {
 
 app.use('/user', require('./routers/account'))
 app.use('/admin', require('./routers/admin'))
-app.use(require('./routers/houses'))
+app.use('/house', require('./routers/houses'))
 
 app.listen(3000, () => {
     console.log("服务器启动成功");

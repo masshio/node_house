@@ -1,6 +1,5 @@
 const express = require('express');
 const router = express.Router();
-const db = require('../core/mysql');
 
 router.post('/register', require('../controller/account').register);
 router.post('/login', require('../controller/account').login);
