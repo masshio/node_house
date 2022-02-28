@@ -1,6 +1,8 @@
 const db = require('../core/mysql');
 const fs = require('fs')
 const path = require('path')
+const jwt = require('jwt-simple');
+const tokenKey = require('../config').tokenKey;
 class Houses {
     async getHouses(req, res) {
         let getSql = 'SELECT * FROM `houses` LIMIT ?,?';
@@ -38,10 +40,10 @@ class Houses {
         let totalSql = "SELECT count(*) AS total FROM `houses` where h_add like ?;";
         let pageSize = req.query.size;
         let pageIndex = req.query.page;
-        let params = ['%'+req.query.addr+'%', (pageIndex - 1) * parseInt(pageSize), parseInt(pageSize)];
+        let params = ['%' + req.query.addr + '%', (pageIndex - 1) * parseInt(pageSize), parseInt(pageSize)];
         try {
             let result = await db.query(searchSql, params);
-            let totalResult = await db.query(totalSql, ['%'+req.query.addr+'%']);
+            let totalResult = await db.query(totalSql, ['%' + req.query.addr + '%']);
             if (result && result.length >= 0) {
                 res.json({
                     code: 200,
@@ -129,14 +131,14 @@ class Houses {
         let ext = path.extname(req.file.originalname);
         let filename = req.file.filename;
         fs.rename(req.file.path, req.file.path + ext, err => {
-            if(err) {
+            if (err) {
                 res.json({
                     code: -200,
                     msg: '图片命名失败'
                 })
             }
         })
-        let params = [req.body.add, req.body.square, req.body.des, req.body.price, req.body.userid, req.body.type,filename + ext];
+        let params = [req.body.add, req.body.square, req.body.des, req.body.price, req.body.userid, req.body.type, filename + ext];
         try {
             let result = await db.query(insertSql, params);
             if (result && result.affectedRows >= 1) {
@@ -182,6 +184,9 @@ class Houses {
 
     }
     async uploadImg(req, res) {
+        let token = req.headres.token;
+        let {info:{u_id}} = jwt.decode(token, tokenKey);
+
         let upadtaSql = 'UPDATE `houses` SET `h_pic`=? WHERE `h_id`=?;'
         let params = [req.file, req.body]
         console.log('body', req.body);
@@ -192,6 +197,22 @@ class Houses {
     }
     async updateHouses(req, res) {
         let updateSql = 'UPDATE `houses` SET `h_add`=?, `h_square`=?, `h_des`=?, `h_price`=?, `h_type`=? WHERE `h_id`=?;';
+        console.log(req.body, req.file);
+        if(req.file) {
+            let ext = path.extname(req.file.originalname);
+            let filename = req.file.filename + ext;
+            let picSql = 'UPDATE `houses` SET `h_pic`=? WHERE `h_id`=?;';
+            let picParams = [filename, req.body.h_id];
+            let result = await db.query(picSql, picParams);
+            fs.rename(req.file.path, req.file.path + ext, err => {
+                if (err) {
+                    res.json({
+                        code: -200,
+                        msg: '图片命名失败'
+                    })
+                }
+            })
+        }
         let params = [
             req.body.h_add,
             req.body.h_square,
