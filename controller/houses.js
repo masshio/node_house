@@ -119,7 +119,7 @@ class Houses {
                 })
             }
         } catch (error) {
-            res.json(500, {
+            res.status(500).json({
                 message: "服务器错误",
                 error
             })
@@ -127,18 +127,18 @@ class Houses {
     }
     async addHouses(req, res) {
         let insertSql = 'INSERT INTO `houses`(`h_add`, `h_square`, `h_des`, `h_price`, `u_id`, `h_type`, `h_pic`)VALUES(?,?,?,?,?,?,?);';
-        console.log(req.body, req.file);
-        let ext = path.extname(req.file.originalname);
-        let filename = req.file.filename;
-        fs.rename(req.file.path, req.file.path + ext, err => {
-            if (err) {
-                res.json({
-                    code: -200,
-                    msg: '图片命名失败'
-                })
-            }
-        })
-        let params = [req.body.add, req.body.square, req.body.des, req.body.price, req.body.userid, req.body.type, filename + ext];
+        // console.log(req.body, req.file);
+        // let ext = path.extname(req.file.originalname);
+        // let filename = req.file.filename;
+        // fs.rename(req.file.path, req.file.path + ext, err => {
+        //     if (err) {
+        //         res.json({
+        //             code: -200,
+        //             msg: '图片命名失败'
+        //         })
+        //     }
+        // })
+        let params = [req.body.add, req.body.square, req.body.des, req.body.price, req.body.userid, req.body.type, req.body.pic];
         try {
             let result = await db.query(insertSql, params);
             if (result && result.affectedRows >= 1) {
@@ -184,14 +184,22 @@ class Houses {
 
     }
     async uploadImg(req, res) {
-        let token = req.headres.token;
-        let {info:{u_id}} = jwt.decode(token, tokenKey);
-
-        let upadtaSql = 'UPDATE `houses` SET `h_pic`=? WHERE `h_id`=?;'
-        let params = [req.file, req.body]
+        let ext = path.extname(req.file.originalname);
+        let filename = req.file.filename + ext;
+        if(req.file) {
+            fs.rename(req.file.path, req.file.path + ext, err => {
+                if (err) {
+                    res.json({
+                        code: -200,
+                        msg: '图片命名失败'
+                    })
+                }
+            })
+        }
         console.log('body', req.body);
         console.log('file', req.file);
         res.json({
+            pic: filename,
             msg: 'success'
         })
     }
