@@ -3,8 +3,8 @@ const createToken = require('../utils/token').createToken;
 
 class AccountController {
     async register(req, res) {
-        let insertSql = 'INSERT INTO `users`(`u_name`,`u_pwd`)VALUES(?,?);';
-        let checkSql = 'SELECT `u_name` FROM `users` WHERE u_name=?;';
+        let insertSql = 'INSERT INTO `users`(`uname`,`upwd`)VALUES(?,?);';
+        let checkSql = 'SELECT `uname` FROM `users` WHERE uname=?;';
         let params = [req.body.name, req.body.pwd];
         let checkParams = [req.body.name]
 
@@ -39,7 +39,7 @@ class AccountController {
         }
     }
     async login(req, res) {
-        let loginSql = 'SELECT `u_id` FROM `users` WHERE u_name=? AND u_pwd=?;';
+        let loginSql = 'SELECT `uid` FROM `users` WHERE uname=? AND upwd=?;';
         let params = [req.body.name, req.body.pwd];
         try {
             let result = await db.query(loginSql, params);
@@ -47,7 +47,7 @@ class AccountController {
                 res.json({
                     code: 200,
                     message: '登陆成功',
-                    data: result[0]['u_id'],
+                    data: result[0]['uid'],
                     token: createToken(result[0])
                 })
             } else {
@@ -65,13 +65,13 @@ class AccountController {
         }
     }
     async changePass(req, res) {
-        let updateSql = 'UPDATE `users` SET `u_pwd`=? WHERE `u_name`=?;';
-        let querySql = 'SELECT `u_pwd` FROM `users` WHERE `u_name`=?;'
+        let updateSql = 'UPDATE `users` SET `upwd`=? WHERE `uname`=?;';
+        let querySql = 'SELECT `upwd` FROM `users` WHERE `uname`=?;'
         let updateParams = [req.body.configPass, req.body.name];
         let queryParams = [req.body.name];
         try {
             let queryResult = await db.query(querySql, queryParams);
-            if (queryResult[0]['u_pwd'] == req.body.pass) {
+            if (queryResult[0]['upwd'] == req.body.pass) {
                 let result = await db.query(updateSql, updateParams);
                 if (result && result.affectedRows >= 1) {
                     res.json({
@@ -99,8 +99,8 @@ class AccountController {
         }
     }
     async updateMessage(req, res) {
-        let updateSql = 'UPDATE `users` SET `u_add`=?, `u_age`=?, `u_email`=?, `r_name`=?,`u_phone`=?, `u_sex`=? WHERE `u_name`=?;';
-        let params = [req.body.addr, req.body.age, req.body.email, req.body.rname, req.body.phone, req.body.sex, req.body.name];
+        let updateSql = 'UPDATE `users` SET  `uage`=?, `uemail`=?, `rname`=?,`uphone`=?, `usex`=? WHERE `uname`=?;';
+        let params = [req.body.age, req.body.email, req.body.rname, req.body.phone, req.body.sex, req.body.name];
         try {
             let result = await db.query(updateSql, params);
             if (result && result.affectedRows >= 1) {
@@ -123,7 +123,7 @@ class AccountController {
         }
     }
     async getMessage(req, res) {
-        let getSql = 'SELECT * FROM `users` WHERE u_name=?;';
+        let getSql = 'SELECT * FROM `users` WHERE uname=?;';
         let params = [req.query.name];
         try {
             let result = await db.query(getSql, params);
@@ -148,7 +148,7 @@ class AccountController {
         }
     }
     async getMessageById(req, res) {
-        let getSql = 'SELECT * FROM `users` WHERE u_id=?;';
+        let getSql = 'SELECT * FROM `users` WHERE uid=?;';
         let params = [req.query.id];
         try {
             let result = await db.query(getSql, params);
@@ -204,7 +204,7 @@ class AccountController {
         }
     }
     async deleteUser(req, res) {
-        let deleteSql = 'DELETE FROM `users` WHERE `u_id`=?;';
+        let deleteSql = 'DELETE FROM `users` WHERE `uid`=?;';
         let params = [req.body.id];
         try {
             let result = await db.query(deleteSql, params);
@@ -227,8 +227,8 @@ class AccountController {
         }
     }
     async updateUser(req, res) {
-        let updateSql = 'UPDATE `users` SET `u_add`=?, `u_age`=?, `u_email`=?, `r_name`=?,`u_phone`=?, `u_sex`=? WHERE `u_name`=?;';
-        let params = [req.body.u_add, req.body.u_age, req.body.u_email, req.body.r_name, req.body.u_phone, req.body.u_sex, req.body.u_name];
+        let updateSql = 'UPDATE `users` SET `uage`=?, `uemail`=?, `rname`=?,`uphone`=?, `usex`=? WHERE `uname`=?;';
+        let params = [req.body.uage, req.body.uemail, req.body.rname, req.body.uphone, req.body.usex, req.body.uname];
         try {
             let result = await db.query(updateSql, params);
             if (result && result.affectedRows >= 1) {
@@ -253,28 +253,28 @@ class AccountController {
     async userAge(req, res) {
         let querySql = `SELECT nld AS 'name', COUNT(*) AS 'value' FROM ( SELECT
                 CASE
-            WHEN u_age >= 0
-            AND u_age <= 20 THEN
+            WHEN uage >= 0
+            AND uage <= 20 THEN
                 '0-20岁'
-            WHEN u_age >= 21
-            AND u_age <= 30 THEN
+            WHEN uage >= 21
+            AND uage <= 30 THEN
                 '21-30岁'
-            WHEN u_age >= 31
-            AND u_age <= 40 THEN
+            WHEN uage >= 31
+            AND uage <= 40 THEN
                 '31-40岁'
-            WHEN u_age >= 41
-            AND u_age <= 50 THEN
+            WHEN uage >= 41
+            AND uage <= 50 THEN
                 '41-50岁'
-            WHEN u_age >= 51
-            AND u_age <= 60 THEN
+            WHEN uage >= 51
+            AND uage <= 60 THEN
                 '51-60岁'
-            WHEN u_age >= 61
-            AND u_age <= 70 THEN
+            WHEN uage >= 61
+            AND uage <= 70 THEN
                 '61-70岁'
-            WHEN u_age >= 71
-            AND u_age <= 80 THEN
+            WHEN uage >= 71
+            AND uage <= 80 THEN
                 '71-80岁'
-            WHEN u_age >= 81 THEN
+            WHEN uage >= 81 THEN
                 '>=81岁'
             END AS nld
             FROM
