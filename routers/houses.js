@@ -34,5 +34,7 @@ router.post('/addHouses', uploader, require('../controller/houses').addHouses); 
 router.get('/searchAdd', require('../controller/houses').searchAdd); // 根据地址模糊搜索
 router.post('/uploadImg', uploader, require('../controller/houses').uploadImg); // 上传图片
 router.get('/examineHouse', require('../controller/houses').examineHouse); // 获取未审核房屋
+router.post('/passExamine', require('../controller/houses').passExamine); // 通过审核
+router.post('/rejectExamine', require('../controller/houses').rejectExamine); // 驳回审核
 
 module.exports = router;

@@ -4,11 +4,12 @@ const path = require('path')
 const jwt = require('jwt-simple');
 const tokenKey = require('../config').tokenKey;
 class Houses {
+    // 管理 获取房屋信息
     async getHouses(req, res) {
         // let searchSql = "SELECT * FROM `houses` where hadd like ? LIMIT ?,?;";
         // let totalSql = "SELECT count(*) AS total FROM `houses` where hadd like ?;";
         let getSql = 'SELECT * FROM `houses` where examine = 1 LIMIT ?,?';
-        let totalSql = 'SELECT count(*) AS total FROM `houses`';
+        let totalSql = 'SELECT count(*) AS total FROM `houses` where examine = 1';
         let pageSize = req.query.size;
         let pageIndex = req.query.page;
         let params = [(pageIndex - 1) * parseInt(pageSize), parseInt(pageSize)];
@@ -37,6 +38,7 @@ class Houses {
             })
         }
     }
+    // 搜索地址
     async searchAdd(req, res) {
         let searchSql = "SELECT * FROM `houses` where hadd like ? and examine = 1 LIMIT ?,?;";
         let totalSql = "SELECT count(*) AS total FROM `houses` where hadd like ? and examine = 1;";
@@ -69,6 +71,7 @@ class Houses {
         }
 
     }
+    // 用户已发布房屋
     async getOwnHouses(req, res) {
         let getSql = 'SELECT * FROM `houses` WHERE uid=? LIMIT ?,?';
         let totalSql = 'SELECT count(*) AS total FROM `houses` WHERE uid=?';
@@ -101,6 +104,7 @@ class Houses {
             })
         }
     }
+    // 详情页 根据id获取房屋
     async getHousesById(req, res) {
         let getSql = 'SELECT * FROM `houses` WHERE hid=?';
         let params = [parseInt(req.query.id)];
@@ -127,6 +131,7 @@ class Houses {
             })
         }
     }
+    // 发布房屋
     async addHouses(req, res) {
         let insertSql = 'INSERT INTO `houses`(`hadd`, `hsquare`, `hdes`, `hprice`, `uid`, `htype`, `hpic`, `examine`)VALUES(?,?,?,?,?,?,?,?);';
         // let ext = path.extname(req.file.originalname);
@@ -160,6 +165,7 @@ class Houses {
             })
         }
     }
+    // 删除房屋
     async deleteHouses(req, res) {
         let deleteSql = 'DELETE FROM `houses` WHERE `hid`=?;';
         let params = [req.body.id];
@@ -184,6 +190,7 @@ class Houses {
         }
 
     }
+    // 图片
     async uploadImg(req, res) {
         let ext = path.extname(req.file.originalname);
         let filename = req.file.filename + ext;
@@ -204,6 +211,7 @@ class Houses {
             msg: 'success'
         })
     }
+    // 更新房屋
     async updateHouses(req, res) {
         let updateSql = 'UPDATE `houses` SET `hadd`=?, `hsquare`=?, `hdes`=?, `hprice`=?, `htype`=? WHERE `hid`=?;';
         if(req.file) {
@@ -249,6 +257,7 @@ class Houses {
             })
         }
     }
+    // 数据分析
     async housePrice(req, res) {
         let querySql = `SELECT nld AS 'name', COUNT(*) AS 'value' FROM ( SELECT
                 CASE
@@ -300,6 +309,7 @@ class Houses {
             })
         }
     }
+    // 审核房屋
     async examineHouse(req, res) {
         let getSql = 'SELECT * FROM `houses` where examine = 0 LIMIT ?,?';
         let totalSql = 'SELECT count(*) AS total FROM `houses` where examine = 0';
@@ -327,6 +337,54 @@ class Houses {
         } catch (error) {
             res.json(500, {
                 message: "服务器错误",
+                error
+            })
+        }
+    }
+    // 审核通过
+    async passExamine(req, res) {
+        let updateSql = 'UPDATE `houses` SET `examine`=? WHERE `hid`=?;';
+        let params = [1, req.body.id];
+        try {
+            let result = await db.query(updateSql, params);
+            if (result && result.affectedRows >= 1) {
+                res.json({
+                    code: 200,
+                    msg: "更新成功"
+                })
+            } else {
+                res.json({
+                    code: -200,
+                    msg: "更新失败"
+                })
+            }
+        } catch (error) {
+            res.status(500).json({
+                msg: "服务器错误",
+                error
+            })
+        }
+    }
+    // 驳回
+    async rejectExamine(req, res) {
+        let updateSql = 'UPDATE `houses` SET `reason`=?, `examine`=? WHERE `hid`=?;';
+        let params = [req.body.reason, -1, req.body.id];
+        try {
+            let result = await db.query(updateSql, params);
+            if (result && result.affectedRows >= 1) {
+                res.json({
+                    code: 200,
+                    msg: "更新成功"
+                })
+            } else {
+                res.json({
+                    code: -200,
+                    msg: "更新失败"
+                })
+            }
+        } catch (error) {
+            res.status(500).json({
+                msg: "服务器错误",
                 error
             })
         }
