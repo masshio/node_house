@@ -104,6 +104,39 @@ class Houses {
             })
         }
     }
+    // 用户在审核中房屋
+    async getExamineHouses(req, res) {
+        let getSql = 'SELECT * FROM `houses` WHERE uid=? and examine <= 0 LIMIT ?,?';
+        let totalSql = 'SELECT count(*) AS total FROM `houses` WHERE uid=? and examine <= 0';
+        let pageSize = req.query.size;
+        let pageIndex = req.query.page;
+        let params = [parseInt(req.query.userid), (pageIndex - 1) * parseInt(pageSize), parseInt(pageSize)];
+        let totalParams = [parseInt(req.query.userid)];
+        try {
+            let result = await db.query(getSql, params);
+            let totalResult = await db.query(totalSql, totalParams);
+            if (result && result.length >= 0) {
+                res.json({
+                    code: 200,
+                    message: '请求成功',
+                    data: {
+                        result
+                    },
+                    total: totalResult[0].total
+                })
+            } else {
+                res.json({
+                    code: -200,
+                    message: '请求失败'
+                })
+            }
+        } catch (error) {
+            res.json(500, {
+                message: "服务器错误",
+                error
+            })
+        }
+    }
     // 详情页 根据id获取房屋
     async getHousesById(req, res) {
         let getSql = 'SELECT * FROM `houses` WHERE hid=?';
@@ -194,7 +227,7 @@ class Houses {
     async uploadImg(req, res) {
         let ext = path.extname(req.file.originalname);
         let filename = req.file.filename + ext;
-        if(req.file) {
+        if (req.file) {
             fs.rename(req.file.path, req.file.path + ext, err => {
                 if (err) {
                     res.json({
@@ -214,7 +247,7 @@ class Houses {
     // 更新房屋
     async updateHouses(req, res) {
         let updateSql = 'UPDATE `houses` SET `hadd`=?, `hsquare`=?, `hdes`=?, `hprice`=?, `htype`=? WHERE `hid`=?;';
-        if(req.file) {
+        if (req.file) {
             let ext = path.extname(req.file.originalname);
             let filename = req.file.filename + ext;
             let picSql = 'UPDATE `houses` SET `hpic`=? WHERE `hid`=?;';
@@ -369,6 +402,54 @@ class Houses {
     async rejectExamine(req, res) {
         let updateSql = 'UPDATE `houses` SET `reason`=?, `examine`=? WHERE `hid`=?;';
         let params = [req.body.reason, -1, req.body.id];
+        try {
+            let result = await db.query(updateSql, params);
+            if (result && result.affectedRows >= 1) {
+                res.json({
+                    code: 200,
+                    msg: "更新成功"
+                })
+            } else {
+                res.json({
+                    code: -200,
+                    msg: "更新失败"
+                })
+            }
+        } catch (error) {
+            res.status(500).json({
+                msg: "服务器错误",
+                error
+            })
+        }
+    }
+    // 重新提交
+    async modifyHouse(req, res) {
+        console.log(req.body);
+        let updateSql = 'UPDATE `houses` SET `hadd`=?, `hsquare`=?, `hdes`=?, `hprice`=?, `htype`=?, `hpic`=?, `examine`=0 WHERE `hid`=?;';
+        if (req.file) {
+            let ext = path.extname(req.file.originalname);
+            let filename = req.file.filename + ext;
+            let picSql = 'UPDATE `houses` SET `hpic`=? WHERE `hid`=?;';
+            let picParams = [filename, req.body.hid];
+            let result = await db.query(picSql, picParams);
+            fs.rename(req.file.path, req.file.path + ext, err => {
+                if (err) {
+                    res.json({
+                        code: -200,
+                        msg: '图片命名失败'
+                    })
+                }
+            })
+        }
+        let params = [
+            req.body.hadd,
+            req.body.hsquare,
+            req.body.hdes,
+            req.body.hprice,
+            req.body.htype,
+            req.body.pic,
+            req.body.hid
+        ];
         try {
             let result = await db.query(updateSql, params);
             if (result && result.affectedRows >= 1) {
