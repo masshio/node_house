@@ -20,6 +20,7 @@ app.use((req, res, next) => {
 app.use('/user', require('./routers/account'))
 app.use('/admin', require('./routers/admin'))
 app.use('/house', require('./routers/houses'))
+app.use('/notice', require('./routers/notice'))
 
 app.listen(3000, () => {
     console.log("服务器启动成功");

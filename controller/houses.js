@@ -6,8 +6,6 @@ const tokenKey = require('../config').tokenKey;
 class Houses {
     // 管理 获取房屋信息
     async getHouses(req, res) {
-        // let searchSql = "SELECT * FROM `houses` where hadd like ? LIMIT ?,?;";
-        // let totalSql = "SELECT count(*) AS total FROM `houses` where hadd like ?;";
         let getSql = 'SELECT * FROM `houses` where examine = 1 LIMIT ?,?';
         let totalSql = 'SELECT count(*) AS total FROM `houses` where examine = 1';
         let pageSize = req.query.size;
@@ -16,6 +14,9 @@ class Houses {
         try {
             let result = await db.query(getSql, params);
             let totalResult = await db.query(totalSql);
+            result.forEach(item => {
+                item.hpic = JSON.parse(item.hpic)
+            })
             if (result && result.length >= 0) {
                 res.json({
                     code: 200,
@@ -48,6 +49,9 @@ class Houses {
         try {
             let result = await db.query(searchSql, params);
             let totalResult = await db.query(totalSql, ['%' + req.query.addr + '%']);
+            result.forEach(item => {
+                item.hpic = JSON.parse(item.hpic)
+            })
             if (result && result.length >= 0) {
                 res.json({
                     code: 200,
@@ -73,8 +77,8 @@ class Houses {
     }
     // 用户已发布房屋
     async getOwnHouses(req, res) {
-        let getSql = 'SELECT * FROM `houses` WHERE uid=? LIMIT ?,?';
-        let totalSql = 'SELECT count(*) AS total FROM `houses` WHERE uid=?';
+        let getSql = 'SELECT * FROM `houses` WHERE uid=? and examine=1 LIMIT ?,?';
+        let totalSql = 'SELECT count(*) AS total FROM `houses` WHERE uid=? and examine=1';
         let pageSize = req.query.size;
         let pageIndex = req.query.page;
         let params = [parseInt(req.query.userid), (pageIndex - 1) * parseInt(pageSize), parseInt(pageSize)];
@@ -82,6 +86,9 @@ class Houses {
         try {
             let result = await db.query(getSql, params);
             let totalResult = await db.query(totalSql, totalParams);
+            result.forEach(item => {
+                item.hpic = JSON.parse(item.hpic)
+            })
             if (result && result.length >= 0) {
                 res.json({
                     code: 200,
@@ -115,6 +122,9 @@ class Houses {
         try {
             let result = await db.query(getSql, params);
             let totalResult = await db.query(totalSql, totalParams);
+            result.forEach(item => {
+                item.hpic = JSON.parse(item.hpic)
+            })
             if (result && result.length >= 0) {
                 res.json({
                     code: 200,
@@ -131,7 +141,7 @@ class Houses {
                 })
             }
         } catch (error) {
-            res.json(500, {
+            res.status(500).json({
                 message: "服务器错误",
                 error
             })
@@ -143,6 +153,9 @@ class Houses {
         let params = [parseInt(req.query.id)];
         try {
             let result = await db.query(getSql, params);
+            result.forEach(item => {
+                item.hpic = JSON.parse(item.hpic)
+            })
             if (result && result.length >= 0) {
                 res.json({
                     code: 200,
@@ -166,18 +179,9 @@ class Houses {
     }
     // 发布房屋
     async addHouses(req, res) {
-        let insertSql = 'INSERT INTO `houses`(`hadd`, `hsquare`, `hdes`, `hprice`, `uid`, `htype`, `hpic`, `examine`)VALUES(?,?,?,?,?,?,?,?);';
-        // let ext = path.extname(req.file.originalname);
-        // let filename = req.file.filename;
-        // fs.rename(req.file.path, req.file.path + ext, err => {
-        //     if (err) {
-        //         res.json({
-        //             code: -200,
-        //             msg: '图片命名失败'
-        //         })
-        //     }
-        // })
-        let params = [req.body.add, req.body.square, req.body.des, req.body.price, req.body.userid, req.body.type, req.body.pic, 0];
+        let insertSql = 'INSERT INTO `houses`(`hadd`, `hsquare`, `hdes`, `hprice`, `uid`, `htype`, `hpic`, `examine`,`mode`,`floor`,`tfloor`,`estate`,`orientation`,`pay`)VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?);';
+        let body = req.body;
+        let params = [body.add, body.square, body.des, body.price, body.userid, body.type, JSON.stringify(body.pic), 0, body.mode, body.floor, body.tfloor, body.estate, body.orientation, body.pay];
         try {
             let result = await db.query(insertSql, params);
             if (result && result.affectedRows >= 1) {
@@ -192,7 +196,7 @@ class Houses {
                 })
             }
         } catch (error) {
-            res.json(500, {
+            res.status(500).json({
                 msg: "服务器错误",
                 error
             })
@@ -246,29 +250,38 @@ class Houses {
     }
     // 更新房屋
     async updateHouses(req, res) {
-        let updateSql = 'UPDATE `houses` SET `hadd`=?, `hsquare`=?, `hdes`=?, `hprice`=?, `htype`=? WHERE `hid`=?;';
-        if (req.file) {
-            let ext = path.extname(req.file.originalname);
-            let filename = req.file.filename + ext;
-            let picSql = 'UPDATE `houses` SET `hpic`=? WHERE `hid`=?;';
-            let picParams = [filename, req.body.hid];
-            let result = await db.query(picSql, picParams);
-            fs.rename(req.file.path, req.file.path + ext, err => {
-                if (err) {
-                    res.json({
-                        code: -200,
-                        msg: '图片命名失败'
-                    })
-                }
-            })
-        }
+        let updateSql = 'UPDATE `houses` SET `hadd`=?, `hsquare`=?, `hdes`=?, `hprice`=?, `htype`=?,`mode`=?,`floor`=?,`tfloor`=?,`estate`=?,`orientation`=?,`pay`=?, `hpic`=? WHERE `hid`=?;';
+        // if (req.file) {
+        //     let ext = path.extname(req.file.originalname);
+        //     let filename = req.file.filename + ext;
+        //     let picSql = 'UPDATE `houses` SET `hpic`=? WHERE `hid`=?;';
+        //     let picParams = [filename, req.body.hid];
+        //     let result = await db.query(picSql, picParams);
+        //     fs.rename(req.file.path, req.file.path + ext, err => {
+        //         if (err) {
+        //             res.json({
+        //                 code: -200,
+        //                 msg: '图片命名失败'
+        //             })
+        //         }
+        //     })
+        // }
+
+        let body = req.body;
         let params = [
-            req.body.hadd,
-            req.body.hsquare,
-            req.body.hdes,
-            req.body.hprice,
-            req.body.htype,
-            req.body.hid
+            body.hadd,
+            body.hsquare,
+            body.hdes,
+            body.hprice,
+            body.htype,
+            body.mode,
+            body.floor,
+            body.tfloor,
+            body.estate,
+            body.orientation,
+            body.pay,
+            JSON.stringify(body.hpic),
+            body.hid,
         ];
         try {
             let result = await db.query(updateSql, params);
@@ -352,6 +365,9 @@ class Houses {
         try {
             let result = await db.query(getSql, params);
             let totalResult = await db.query(totalSql);
+            // result.forEach(item => {
+            //     item.hpic = JSON.parse(item.hpic)
+            // })
             if (result && result.length >= 0) {
                 res.json({
                     code: 200,
@@ -368,7 +384,7 @@ class Houses {
                 })
             }
         } catch (error) {
-            res.json(500, {
+            res.status(500).json({
                 message: "服务器错误",
                 error
             })
@@ -424,31 +440,37 @@ class Houses {
     }
     // 重新提交
     async modifyHouse(req, res) {
-        console.log(req.body);
-        let updateSql = 'UPDATE `houses` SET `hadd`=?, `hsquare`=?, `hdes`=?, `hprice`=?, `htype`=?, `hpic`=?, `examine`=0 WHERE `hid`=?;';
-        if (req.file) {
-            let ext = path.extname(req.file.originalname);
-            let filename = req.file.filename + ext;
-            let picSql = 'UPDATE `houses` SET `hpic`=? WHERE `hid`=?;';
-            let picParams = [filename, req.body.hid];
-            let result = await db.query(picSql, picParams);
-            fs.rename(req.file.path, req.file.path + ext, err => {
-                if (err) {
-                    res.json({
-                        code: -200,
-                        msg: '图片命名失败'
-                    })
-                }
-            })
-        }
+        let updateSql = 'UPDATE `houses` SET `hadd`=?, `hsquare`=?, `hdes`=?, `hprice`=?, `htype`=?, `examine`=0, `mode`=?,`floor`=?,`tfloor`=?,`estate`=?,`orientation`=?,`pay`=?, `hpic`=? WHERE `hid`=?;';
+        // if (req.file) {
+        //     let ext = path.extname(req.file.originalname);
+        //     let filename = req.file.filename + ext;
+        //     let picSql = 'UPDATE `houses` SET `hpic`=? WHERE `hid`=?;';
+        //     let picParams = [filename, req.body.hid];
+        //     let result = await db.query(picSql, picParams);
+        //     fs.rename(req.file.path, req.file.path + ext, err => {
+        //         if (err) {
+        //             res.json({
+        //                 code: -200,
+        //                 msg: '图片命名失败'
+        //             })
+        //         }
+        //     })
+        // }
+        let body = req.body;
         let params = [
-            req.body.hadd,
-            req.body.hsquare,
-            req.body.hdes,
-            req.body.hprice,
-            req.body.htype,
-            req.body.pic,
-            req.body.hid
+            body.hadd,
+            body.hsquare,
+            body.hdes,
+            body.hprice,
+            body.htype,
+            body.mode,
+            body.floor,
+            body.tfloor,
+            body.estate,
+            body.orientation,
+            body.pay,
+            JSON.stringify(body.hpic),
+            body.hid,
         ];
         try {
             let result = await db.query(updateSql, params);

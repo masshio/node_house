@@ -7,7 +7,6 @@ class AccountController {
         let checkSql = 'SELECT `uname` FROM `users` WHERE uname=?;';
         let params = [req.body.name, req.body.pwd];
         let checkParams = [req.body.name]
-
         try {
             let check = await db.query(checkSql, checkParams);
             if (check && check.length >= 1) {
@@ -99,8 +98,8 @@ class AccountController {
         }
     }
     async updateMessage(req, res) {
-        let updateSql = 'UPDATE `users` SET  `uage`=?, `uemail`=?, `rname`=?,`uphone`=?, `usex`=? WHERE `uname`=?;';
-        let params = [req.body.age, req.body.email, req.body.rname, req.body.phone, req.body.sex, req.body.name];
+        let updateSql = 'UPDATE `users` SET  `uage`=?, `uemail`=?, `rname`=?,`uphone`=?, `usex`=?, `uavatar`=? WHERE `uname`=?;';
+        let params = [req.body.uage, req.body.uemail, req.body.rname, req.body.uphone, req.body.usex, req.body.uavatar, req.body.uname];
         try {
             let result = await db.query(updateSql, params);
             if (result && result.affectedRows >= 1) {
@@ -307,7 +306,6 @@ class AccountController {
             })
         }
     }
-
 }
 
 module.exports = new AccountController();
