@@ -1,6 +1,7 @@
 const db = require('../core/mysql');
 class Notice{
     async getNotice(req, res) {
+        // let getSql = 'SELECT * FROM `notice`';
         let getSql = 'SELECT * FROM `notice` LIMIT ?,?';
         let totalSql = 'SELECT count(*) AS total FROM `notice`';
         let pageSize = req.query.size;
@@ -25,7 +26,7 @@ class Notice{
                 })
             }
         } catch (error) {
-            res.json(500, {
+            res.status(500).json({
                 message: "服务器错误",
                 error
             })

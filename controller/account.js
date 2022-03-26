@@ -38,21 +38,51 @@ class AccountController {
         }
     }
     async login(req, res) {
-        let loginSql = 'SELECT `uid` FROM `users` WHERE uname=? AND upwd=?;';
+        let loginSql = 'SELECT `uid` ,`status` FROM `users` WHERE uname=? AND upwd=?;';
         let params = [req.body.name, req.body.pwd];
         try {
             let result = await db.query(loginSql, params);
-            if (result && result.length >= 1) {
+            console.log(result);
+            if (result && result[0].status === 1 && result.length >= 1) {
                 res.json({
                     code: 200,
                     message: '登陆成功',
                     data: result[0]['uid'],
                     token: createToken(result[0])
                 })
+            } else if (result && result[0].status === 0 && result.length >= 1) {
+                res.json({
+                    code: -100,
+                    message: '该账号已被拉黑',
+                })
             } else {
                 res.json({
                     code: -200,
-                    message: '登陆失败',
+                    message: '登陆失败,请检查用户名和密码是否输入正确',
+                })
+            }
+        } catch (error) {
+            res.status(500).json({
+                code: 500,
+                message: '服务器错误',
+                error
+            })
+        }
+    }
+    async block(req, res) {
+        let updateSql = 'UPDATE `users` SET `status`=? WHERE `uid`=?;';
+        let updateParams = [req.body.status,req.body.id];
+        try {
+            let result = await db.query(updateSql, updateParams);
+            if (result && result.affectedRows >= 1) {
+                res.json({
+                    code: 200,
+                    message: '修改成功',
+                })
+            } else {
+                res.json({
+                    code: -200,
+                    message: '修改失败',
                 })
             }
         } catch (error) {
@@ -302,6 +332,37 @@ class AccountController {
             res.status(500).json({
                 code: 500,
                 message: '服务器错误',
+                error
+            })
+        }
+    }
+    async searchName(req, res) {
+        let searchSql = "SELECT * FROM `users` where uname like ? ;";
+        let totalSql = "SELECT count(*) AS total FROM `users` where uname like ?;";
+        let pageSize = req.query.size;
+        let pageIndex = req.query.page;
+        let params = ['%' + req.query.name + '%',(pageIndex - 1) * parseInt(pageSize), parseInt(pageSize)];
+        try {
+            let result = await db.query(searchSql, params);
+            let totalResult = await db.query(totalSql, ['%' + req.query.name + '%']);
+            if (result && result.length >= 0) {
+                res.json({
+                    code: 200,
+                    data: {
+                        result
+                    },
+                    total: totalResult[0].total,
+                    msg: "查询成功"
+                })
+            } else {
+                res.json({
+                    code: -200,
+                    msg: "查询失败"
+                })
+            }
+        } catch (error) {
+            res.status(500).json({
+                msg: "服务器错误",
                 error
             })
         }

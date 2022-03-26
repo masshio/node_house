@@ -11,5 +11,7 @@ router.get('/getUser', require('../controller/account').getUser);
 router.post('/deleteUser', require('../controller/account').deleteUser);
 router.post('/updateUser', require('../controller/account').updateUser);
 router.get('/userAge', require('../controller/account').userAge);
+router.post('/block', require('../controller/account').block);
+router.get('/searchName', require('../controller/account').searchName);
 
 module.exports = router;
