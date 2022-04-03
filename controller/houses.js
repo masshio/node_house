@@ -41,14 +41,67 @@ class Houses {
     }
     // 搜索地址
     async searchAdd(req, res) {
-        let searchSql = "SELECT * FROM `houses` where hadd like ? and examine = 1 LIMIT ?,?;";
-        let totalSql = "SELECT count(*) AS total FROM `houses` where hadd like ? and examine = 1;";
+        // let searchSql = "SELECT * FROM `houses` where estate like ? or hadd like ? and examine = 1 LIMIT ?,?;";
+        let getSql = "SELECT * FROM `houses` "
+        let searchSql = "where examine = 1 and (estate like ? or hadd like ?) ";
+        switch(parseInt(req.query.mode)) {
+            case 1:
+                searchSql += "and mode = '整租' ";
+                break;
+            case 2: 
+                searchSql += "and mode = '合租' ";
+                break;
+            default: 
+                break;
+        }
+        switch(parseInt(req.query.price)) {
+            case 1:
+                searchSql += "and hprice <= 1000 ";
+                break;
+            case 2:
+                searchSql += "and hprice between 1000 and 2000 ";
+                break;
+            case 3:
+                searchSql += "and hprice between 2000 and 3000 ";
+                break;
+            case 4:
+                searchSql += "and hprice between 3000 and 5000 ";
+                break;
+            case 5:
+                searchSql += "and hprice >= 5000 ";
+                break;
+            default: 
+                break;
+        }
+        switch(parseInt(req.query.square)) {
+            case 1:
+                searchSql += "and hsquare <= 40 ";
+                break;
+            case 2:
+                searchSql += "and hsquare between 40 and 60 ";
+                break;
+            case 3:
+                searchSql += "and hsquare between 60 and 80 ";
+                break;
+            case 4:
+                searchSql += "and hsquare between 80 and 100 ";
+                break;
+            case 5:
+                searchSql += "and hsquare between 100 and 1200 ";
+                break;
+            case 6:
+                searchSql += "and hsquare >= 120 ";
+                break;
+        }
+        getSql += searchSql + "LIMIT ?,?;"
+        // let totalSql = "SELECT count(*) AS total FROM `houses` where estate like ? or hadd like ? and examine = 1;";
+        let totalSql = "SELECT count(*) AS total FROM `houses`" + searchSql + ";";
         let pageSize = req.query.size;
         let pageIndex = req.query.page;
-        let params = ['%' + req.query.addr + '%', (pageIndex - 1) * parseInt(pageSize), parseInt(pageSize)];
+        let params = ['%' + req.query.addr + '%', '%' + req.query.addr + '%', (pageIndex - 1) * parseInt(pageSize), parseInt(pageSize)];
         try {
-            let result = await db.query(searchSql, params);
-            let totalResult = await db.query(totalSql, ['%' + req.query.addr + '%']);
+            let result = await db.query(getSql, params);
+            let totalResult = await db.query(totalSql, ['%' + req.query.addr + '%', '%' + req.query.addr + '%']);
             result.forEach(item => {
                 item.hpic = JSON.parse(item.hpic)
             })
@@ -153,9 +206,8 @@ class Houses {
         let params = [parseInt(req.query.id)];
         try {
             let result = await db.query(getSql, params);
-            result.forEach(item => {
-                item.hpic = JSON.parse(item.hpic)
-            })
+            result[0].hpic = JSON.parse(result[0].hpic);
+            result[0]['his_price'] = JSON.parse(result[0]['his_price']);
             if (result && result.length >= 0) {
                 res.json({
                     code: 200,
@@ -179,9 +231,14 @@ class Houses {
     }
     // 发布房屋
     async addHouses(req, res) {
-        let insertSql = 'INSERT INTO `houses`(`hadd`, `hsquare`, `hdes`, `hprice`, `uid`, `htype`, `hpic`, `examine`,`mode`,`floor`,`tfloor`,`estate`,`orientation`,`pay`)VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?);';
+        let insertSql = 'INSERT INTO `houses`(`hadd`, `hsquare`, `hdes`, `hprice`, `uid`, `htype`, `hpic`, `examine`,`mode`,`floor`,`tfloor`,`estate`,`orientation`,`pay`,`hdate`, `his_price`)VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);';
         let body = req.body;
-        let params = [body.add, body.square, body.des, body.price, body.userid, body.type, JSON.stringify(body.pic), 0, body.mode, body.floor, body.tfloor, body.estate, body.orientation, body.pay];
+        let date = new Date();
+        let dateParam = [date.getFullYear(), date.getMonth()+1, date.getDate()].join('/');
+        let hisParam = {};
+        hisParam[dateParam] = body.price;
+        hisParam = JSON.stringify(hisParam);
+        let params = [body.add, body.square, body.des, body.price, body.userid, body.type, JSON.stringify(body.pic), 0, body.mode, body.floor, body.tfloor, body.estate, body.orientation, body.pay,dateParam, hisParam];
         try {
             let result = await db.query(insertSql, params);
             if (result && result.affectedRows >= 1) {
@@ -250,7 +307,7 @@ class Houses {
     }
     // 更新房屋
     async updateHouses(req, res) {
-        let updateSql = 'UPDATE `houses` SET `hadd`=?, `hsquare`=?, `hdes`=?, `hprice`=?, `htype`=?,`mode`=?,`floor`=?,`tfloor`=?,`estate`=?,`orientation`=?,`pay`=?, `hpic`=? WHERE `hid`=?;';
+        let updateSql = 'UPDATE `houses` SET `hadd`=?, `hsquare`=?, `hdes`=?, `hprice`=?, `htype`=?,`mode`=?,`floor`=?,`tfloor`=?,`estate`=?,`orientation`=?,`pay`=?, `hpic`=?, `his_price`=? WHERE `hid`=?;';
         // if (req.file) {
         //     let ext = path.extname(req.file.originalname);
         //     let filename = req.file.filename + ext;
@@ -266,29 +323,36 @@ class Houses {
         //         }
         //     })
         // }
-
+        let hisSql = 'SELECT `his_price` FROM `houses` WHERE hid=?'
         let body = req.body;
-        let params = [
-            body.hadd,
-            body.hsquare,
-            body.hdes,
-            body.hprice,
-            body.htype,
-            body.mode,
-            body.floor,
-            body.tfloor,
-            body.estate,
-            body.orientation,
-            body.pay,
-            JSON.stringify(body.hpic),
-            body.hid,
-        ];
+        let date = new Date();
+        let dateParam = [date.getFullYear(), date.getMonth()+1, date.getDate()].join('/');
+        let hisParam = [body.hid];
         try {
+            let hisResult = await db.query(hisSql, hisParam);
+            let temp = JSON.parse(hisResult[0]['his_price']);  //{'2022-1-10': 1234,....}
+            temp[dateParam] = body.hprice;
+            let params = [
+                body.hadd,
+                body.hsquare,
+                body.hdes,
+                body.hprice,
+                body.htype,
+                body.mode,
+                body.floor,
+                body.tfloor,
+                body.estate,
+                body.orientation,
+                body.pay,
+                JSON.stringify(body.hpic),
+                JSON.stringify(temp),
+                body.hid,
+            ];
             let result = await db.query(updateSql, params);
             if (result && result.affectedRows >= 1) {
                 res.json({
                     code: 200,
-                    msg: "更新成功"
+                    msg: "更新成功",
                 })
             } else {
                 res.json({

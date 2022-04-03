@@ -38,7 +38,7 @@ class AccountController {
         }
     }
     async login(req, res) {
-        let loginSql = 'SELECT `uid` ,`status` FROM `users` WHERE uname=? AND upwd=?;';
+        let loginSql = 'SELECT `uid` ,`status`, `uavatar`, `rname` FROM `users` WHERE uname=? AND upwd=? AND status=1;';
         let params = [req.body.name, req.body.pwd];
         try {
             let result = await db.query(loginSql, params);
@@ -47,7 +47,7 @@ class AccountController {
                 res.json({
                     code: 200,
                     message: '登陆成功',
-                    data: result[0]['uid'],
+                    data: result,
                     token: createToken(result[0])
                 })
             } else if (result && result[0].status === 0 && result.length >= 1) {
