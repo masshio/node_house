@@ -375,8 +375,11 @@ class Houses {
             AND hprice <= 1000 THEN
                 '0-1000元'
             WHEN hprice >= 1001
+            AND hprice <= 2000 THEN
+                '1001-2000元'
+            WHEN hprice >= 2001
             AND hprice <= 3000 THEN
-                '1001-3000元'
+                '2001-3000元'
             WHEN hprice >= 3001
             AND hprice <= 5000 THEN
                 '3001-5000元'

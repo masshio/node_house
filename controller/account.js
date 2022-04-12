@@ -38,19 +38,19 @@ class AccountController {
         }
     }
     async login(req, res) {
-        let loginSql = 'SELECT `uid` ,`status`, `uavatar`, `rname` FROM `users` WHERE uname=? AND upwd=? AND status=1;';
+        let loginSql = 'SELECT `uid` ,`status`, `uavatar`, `rname` FROM `users` WHERE uname=? AND upwd=?;';
         let params = [req.body.name, req.body.pwd];
         try {
             let result = await db.query(loginSql, params);
             console.log(result);
-            if (result && result[0].status === 1 && result.length >= 1) {
+            if (result.length && result[0].status === 1 && result.length >= 1) {
                 res.json({
                     code: 200,
                     message: '登陆成功',
                     data: result,
                     token: createToken(result[0])
                 })
-            } else if (result && result[0].status === 0 && result.length >= 1) {
+            } else if (result.length && result[0].status === 0 && result.length >= 1) {
                 res.json({
                     code: -100,
                     message: '该账号已被拉黑',
