@@ -1,11 +1,10 @@
 const db = require('../core/mysql');
 const createToken = require('../utils/token').createToken;
-
+const md5 = require('js-md5')
 class AccountController {
     async register(req, res) {
         let insertSql = 'INSERT INTO `users`(`uname`,`upwd`)VALUES(?,?);';
         let checkSql = 'SELECT `uname` FROM `users` WHERE uname=?;';
-        let params = [req.body.name, req.body.pwd];
         let checkParams = [req.body.name]
         try {
             let check = await db.query(checkSql, checkParams);
@@ -15,6 +14,7 @@ class AccountController {
                     message: "账号已存在"
                 })
             } else {
+                let params = [req.body.name, md5(req.body.pwd)];
                 let result = await db.query(insertSql, params);
                 if (result && result.affectedRows >= 1) {
                     res.json({
@@ -39,10 +39,9 @@ class AccountController {
     }
     async login(req, res) {
         let loginSql = 'SELECT `uid` ,`status`, `uavatar`, `rname` FROM `users` WHERE uname=? AND upwd=?;';
-        let params = [req.body.name, req.body.pwd];
+        let params = [req.body.name, md5(req.body.pwd)];
         try {
             let result = await db.query(loginSql, params);
-            console.log(result);
             if (result.length && result[0].status === 1 && result.length >= 1) {
                 res.json({
                     code: 200,

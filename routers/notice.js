@@ -9,7 +9,7 @@ router.use((req, res, next) => {
     try {
         result = jwt.decode(token, tokenKey);
     } catch (error) {
-        res.status(401).json({
+        res.json({
             code: 401,
             msg: '无效token'
         })

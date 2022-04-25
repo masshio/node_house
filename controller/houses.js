@@ -1,6 +1,6 @@
 const db = require('../core/mysql');
-const fs = require('fs')
-const path = require('path')
+const fs = require('fs');
+const path = require('path');
 const jwt = require('jwt-simple');
 const tokenKey = require('../config').tokenKey;
 class Houses {
@@ -87,7 +87,7 @@ class Houses {
                 searchSql += "and hsquare between 80 and 100 ";
                 break;
             case 5:
-                searchSql += "and hsquare between 100 and 1200 ";
+                searchSql += "and hsquare between 100 and 120 ";
                 break;
             case 6:
                 searchSql += "and hsquare >= 120 ";
