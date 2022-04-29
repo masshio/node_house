@@ -298,8 +298,6 @@ class Houses {
                 }
             })
         }
-        console.log('body', req.body);
-        console.log('file', req.file);
         res.json({
             pic: filename,
             msg: 'success'
@@ -308,21 +306,6 @@ class Houses {
     // 更新房屋
     async updateHouses(req, res) {
         let updateSql = 'UPDATE `houses` SET `hadd`=?, `hsquare`=?, `hdes`=?, `hprice`=?, `htype`=?,`mode`=?,`floor`=?,`tfloor`=?,`estate`=?,`orientation`=?,`pay`=?, `hpic`=?, `his_price`=? WHERE `hid`=?;';
-        // if (req.file) {
-        //     let ext = path.extname(req.file.originalname);
-        //     let filename = req.file.filename + ext;
-        //     let picSql = 'UPDATE `houses` SET `hpic`=? WHERE `hid`=?;';
-        //     let picParams = [filename, req.body.hid];
-        //     let result = await db.query(picSql, picParams);
-        //     fs.rename(req.file.path, req.file.path + ext, err => {
-        //         if (err) {
-        //             res.json({
-        //                 code: -200,
-        //                 msg: '图片命名失败'
-        //             })
-        //         }
-        //     })
-        // }
         let hisSql = 'SELECT `his_price` FROM `houses` WHERE hid=?'
         let body = req.body;
         let date = new Date();
@@ -367,7 +350,7 @@ class Houses {
             })
         }
     }
-    // 数据分析
+    // 价格数据分析
     async housePrice(req, res) {
         let querySql = `SELECT nld AS 'name', COUNT(*) AS 'value' FROM ( SELECT
                 CASE
@@ -422,6 +405,138 @@ class Houses {
             })
         }
     }
+    // 面积数据分析
+    async houseSquare(req, res) {
+        let querySql = `SELECT nld AS 'name', COUNT(*) AS 'value' FROM ( SELECT
+                CASE
+            WHEN hsquare >= 0
+            AND hsquare <= 20 THEN
+                '0-20㎡'
+            WHEN hsquare >= 21
+            AND hsquare <= 40 THEN
+                '21-40㎡'
+            WHEN hsquare >= 41
+            AND hsquare <= 60 THEN
+                '41-60㎡'
+            WHEN hsquare >= 61
+            AND hsquare <= 100 THEN
+                '61-100㎡'
+            WHEN hsquare >= 101
+            AND hsquare <= 140 THEN
+                '101-140㎡'
+            WHEN hsquare >= 141
+            AND hsquare <= 180 THEN
+                '141-180㎡'
+            WHEN hsquare >= 181 THEN
+                '≥180㎡'
+            END AS nld
+            FROM
+                houses
+            ) a
+    GROUP BY
+        nld`;
+        let params = [];
+        try {
+            let result = await db.query(querySql, params);
+            if (result && result.length >= 1) {
+                res.json({
+                    code: 200,
+                    message: '查询成功',
+                    data: {
+                        result
+                    }
+                })
+            } else {
+                res.json({
+                    code: -200,
+                    message: '查询失败',
+                })
+            }
+        } catch (error) {
+            res.status(500).json({
+                code: 500,
+                message: '服务器错误',
+                error
+            })
+        }
+    }
+    // 付款方式数据分析
+    async housePay(req, res) {
+        let querySql = `SELECT nld AS 'name', COUNT(*) AS 'value' FROM ( SELECT
+                CASE
+            WHEN pay = '押一付一' THEN
+                '押一付一'
+            WHEN pay = '押三付一' THEN
+                '押三付一'
+            WHEN pay = '半年付' THEN
+                '半年付'
+            WHEN pay = '年付' THEN
+                '年付'
+            END AS nld
+            FROM
+                houses
+            ) a
+    GROUP BY
+        nld`;
+        let params = [];
+        try {
+            let result = await db.query(querySql, params);
+            if (result && result.length >= 1) {
+                res.json({
+                    code: 200,
+                    message: '查询成功',
+                    data: {
+                        result
+                    }
+                })
+            } else {
+                res.json({
+                    code: -200,
+                    message: '查询失败',
+                })
+            }
+        } catch (error) {
+            res.status(500).json({
+                code: 500,
+                message: '服务器错误',
+                error
+            })
+        }
+    }
+    // async houseDate(req, res) {
+    //     let getSql = 'SELECT hdate FROM `houses` where examine = 1';
+    //     // let totalSql = 'SELECT count(*) AS total FROM `houses` where examine = 1';
+    //     // let pageSize = req.query.size;
+    //     // let pageIndex = req.query.page;
+    //     // let params = [(pageIndex - 1) * parseInt(pageSize), parseInt(pageSize)];
+    //     try {
+    //         let result = await db.query(getSql, []);
+    //         // let totalResult = await db.query(totalSql);
+    //         // result.forEach(item => {
+    //         //     item.hpic = JSON.parse(item.hpic)
+    //         // })
+    //         if (result && result.length >= 0) {
+    //             res.json({
+    //                 code: 200,
+    //                 message: '请求成功',
+    //                 data: {
+    //                     result
+    //                 },
+    //                 // total: totalResult[0].total
+    //             })
+    //         } else {
+    //             res.json({
+    //                 code: -200,
+    //                 message: '请求失败'
+    //             })
+    //         }
+    //     } catch (error) {
+    //         res.json(500, {
+    //             message: "服务器错误",
+    //             error
+    //         })
+    //     }
+    // }
     // 审核房屋
     async examineHouse(req, res) {
         let getSql = 'SELECT * FROM `houses` where examine = 0 LIMIT ?,?';
@@ -508,21 +623,6 @@ class Houses {
     // 重新提交
     async modifyHouse(req, res) {
         let updateSql = 'UPDATE `houses` SET `hadd`=?, `hsquare`=?, `hdes`=?, `hprice`=?, `htype`=?, `examine`=0, `mode`=?,`floor`=?,`tfloor`=?,`estate`=?,`orientation`=?,`pay`=?, `hpic`=? WHERE `hid`=?;';
-        // if (req.file) {
-        //     let ext = path.extname(req.file.originalname);
-        //     let filename = req.file.filename + ext;
-        //     let picSql = 'UPDATE `houses` SET `hpic`=? WHERE `hid`=?;';
-        //     let picParams = [filename, req.body.hid];
-        //     let result = await db.query(picSql, picParams);
-        //     fs.rename(req.file.path, req.file.path + ext, err => {
-        //         if (err) {
-        //             res.json({
-        //                 code: -200,
-        //                 msg: '图片命名失败'
-        //             })
-        //         }
-        //     })
-        // }
         let body = req.body;
         let params = [
             body.hadd,

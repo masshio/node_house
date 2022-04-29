@@ -95,11 +95,11 @@ class AccountController {
     async changePass(req, res) {
         let updateSql = 'UPDATE `users` SET `upwd`=? WHERE `uname`=?;';
         let querySql = 'SELECT `upwd` FROM `users` WHERE `uname`=?;'
-        let updateParams = [req.body.configPass, req.body.name];
+        let updateParams = [md5(req.body.configPass), req.body.name];
         let queryParams = [req.body.name];
         try {
             let queryResult = await db.query(querySql, queryParams);
-            if (queryResult[0]['upwd'] == req.body.pass) {
+            if (queryResult[0]['upwd'] == md5(req.body.pass)) {
                 let result = await db.query(updateSql, updateParams);
                 if (result && result.affectedRows >= 1) {
                     res.json({
