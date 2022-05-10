@@ -14,7 +14,7 @@ router.use((req, res, next) => {
     try {
         result = jwt.decode(token, tokenKey);
     } catch (error) {
-        res.status(401).json({
+        res.json({
             code: 401,
             msg: '无效token'
         })
@@ -28,6 +28,7 @@ router.get('/getHouses', require('../controller/houses').getHouses); // 获取�
 router.get('/getOwnHouses', require('../controller/houses').getOwnHouses); // 获取用户个人发布房屋
 router.get('/getExamineHouses', require('../controller/houses').getExamineHouses); // 用户在审核中房屋
 router.get('/getHousesById', require('../controller/houses').getHousesById); // 通过id获得房屋
+router.get('/getHousesDetail', require('../controller/houses').getHousesDetail); // 管理端 详情
 router.get('/housePrice', require('../controller/houses').housePrice); // 价格数据分析
 router.get('/houseSquare', require('../controller/houses').houseSquare); // 面积数据分析
 router.get('/housePay', require('../controller/houses').housePay); // 付款方式数据分析

@@ -200,8 +200,37 @@ class Houses {
             })
         }
     }
-    // 详情页 根据id获取房屋
+    // 详情页 根据id获取房屋(通过审核的)
     async getHousesById(req, res) {
+        let getSql = 'SELECT * FROM `houses` WHERE hid=? and examine > 0';
+        let params = [parseInt(req.query.id)];
+        try {
+            let result = await db.query(getSql, params);
+            result[0].hpic = JSON.parse(result[0].hpic);
+            result[0]['his_price'] = JSON.parse(result[0]['his_price']);
+            if (result && result.length >= 0) {
+                res.json({
+                    code: 200,
+                    message: '请求成功',
+                    data: {
+                        result
+                    },
+                })
+            } else {
+                res.json({
+                    code: -200,
+                    message: '请求失败'
+                })
+            }
+        } catch (error) {
+            res.status(500).json({
+                message: "服务器错误",
+                error
+            })
+        }
+    }
+    //详情(所有)
+    async getHousesDetail(req, res) {
         let getSql = 'SELECT * FROM `houses` WHERE hid=?';
         let params = [parseInt(req.query.id)];
         try {
