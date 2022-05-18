@@ -6,7 +6,6 @@ class Admin {
         let params = [req.body.name, req.body.pwd];
         try {
             let result = await db.query(loginSql, params);
-            console.log(result);
             if(result && result.length >= 1) {
                 res.json({
                     code: 200,

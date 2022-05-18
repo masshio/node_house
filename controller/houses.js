@@ -39,7 +39,7 @@ class Houses {
             })
         }
     }
-    // 搜索地址
+    // 搜索
     async searchAdd(req, res) {
         // let searchSql = "SELECT * FROM `houses` where estate like ? or hadd like ? and examine = 1 LIMIT ?,?;";
         let getSql = "SELECT * FROM `houses` "

@@ -3,7 +3,7 @@ const createToken = require('../utils/token').createToken;
 const md5 = require('js-md5')
 class AccountController {
     async register(req, res) {
-        let insertSql = 'INSERT INTO `users`(`uname`,`upwd`)VALUES(?,?);';
+        let insertSql = 'INSERT INTO `users`(`uname`,`upwd`,`uphone`)VALUES(?,?,?);';
         let checkSql = 'SELECT `uname` FROM `users` WHERE uname=?;';
         let checkParams = [req.body.name]
         try {
@@ -14,7 +14,7 @@ class AccountController {
                     message: "账号已存在"
                 })
             } else {
-                let params = [req.body.name, md5(req.body.pwd)];
+                let params = [req.body.name, md5(req.body.pwd), req.body.phone];
                 let result = await db.query(insertSql, params);
                 if (result && result.affectedRows >= 1) {
                     res.json({
